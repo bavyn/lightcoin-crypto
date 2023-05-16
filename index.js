@@ -25,8 +25,10 @@ class Transaction {
     this.account = account;
   }
   commit() {
+    if (!this.isAllowed()) return false;
     this.time = new Date();
     this.account.addTransaction(this);
+    return true;
   }
 }
 
@@ -34,11 +36,17 @@ class Deposit extends Transaction {
   get value() {
     return this.amount;
   }
+  isAllowed() {
+    return true;
+  }
 }
 
 class Withdrawal extends Transaction {
   get value() {
     return -this.amount;
+  }
+  isAllowed() {
+    return (this.account.balance - this.amount >= 0);
   }
 }
 
@@ -46,14 +54,31 @@ class Withdrawal extends Transaction {
 // DRIVER CODE BELOW
 // We use the code below to "drive" the application logic above and make sure it's working as expected
 
-const myAccount = new Account("snow-patrol");
+const myAccount = new Account("Karma");
+
 console.log('Starting balance: ', myAccount.balance);
+console.log("------------------------------------");
 
-const t1 = new Deposit(500, myAccount);
-t1.commit();
-console.log('New balance: ', myAccount.balance);
+// attempt to withdraw when balance is zero to test commit isAllowed
+console.log('Testing withdrawal amount that exceeds account balance');
+const t1 = new Withdrawal(10, myAccount);
+console.log('Commit possible?', t1.commit());
+console.log('Account balance: ', myAccount.balance);
+console.log("------------------------------------");
 
-const t2 = new Withdrawal(200, myAccount);
-t2.commit();
+// deposit
+console.log('Testing deposit');
+const t2 = new Deposit(1000000000, myAccount);
+console.log('Commit possible?', t2.commit());
+console.log('Account balance: ', myAccount.balance);
+console.log("------------------------------------");
 
-console.log('Ending balance:', myAccount.balance);
+// withdrawal that should now be possible
+console.log('Testing withdrawal');
+const t3 = new Withdrawal(200, myAccount);
+console.log('Commit possible?', t3.commit());
+console.log('Account balance: ', myAccount.balance);
+console.log("------------------------------------");
+
+// print transaction history
+console.log('Transaction history: ', myAccount.transactions);
